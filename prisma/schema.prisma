@@ -1,0 +1,62 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+//user - post -> one-to-many
+//Category - post -> many-tomany
+//UserPreference - User -> one-to-one
+
+//? означає що поле не обовязкове для ввода
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String          @id @default(uuid())
+  email          String          @unique @db.VarChar(256)
+  name           String?
+  age            Int
+  role           Role            @default(BASIC)
+  writtenPost    Post[]          @relation("WritenPosts")
+  favoritePost   Post[]          @relation("FavoritePosts")
+  userPreference         UserPreference?    @relation(fields: [userPreferenceId], references: [id])
+  userPreferenceId       String?  @unique
+
+  @@unique([age, name])
+  @@index([email])
+}
+
+model UserPreference {
+  id           String  @id @default(uuid())
+  emailUpdates Boolean
+  user User?
+}
+
+model Post {
+  id            String     @id @default(uuid())
+  title         String
+  averageRating Float
+  createAt      DateTime   @default(now())
+  updateAt      DateTime   @updatedAt
+  author        User       @relation("WritenPosts", fields: [authorId], references: [id])
+  authorId      String
+  favoriteBy    User?      @relation("FavoritePosts", fields: [fafvoriteById], references: [id])
+  fafvoriteById String
+  categories    Category[]
+}
+
+model Category {
+  id    String @id @default(uuid())
+  name  String @unique
+  posts Post[]
+}
+
+enum Role {
+  BASIC
+  ADMIN
+}
